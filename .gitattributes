@@ -1,0 +1,15 @@
+* text=auto eol=lf
+
+*.pdf binary
+*.zip binary
+*.p12 binary
+*.crt binary
+*.pem text eol=lf
+*.xsd text eol=lf
+*.wsdl text eol=lf
+*.xml text eol=lf
+*.yml text eol=lf
+*.php text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.neon text eol=lf

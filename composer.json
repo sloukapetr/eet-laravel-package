@@ -1,0 +1,68 @@
+{
+    "name": "sloukapetr/eet-laravel-package",
+    "description": "Laravel package for the Czech EET 2.0 SOAP interface and CA EET certificate renewal.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "laravel",
+        "eet",
+        "evidence-trzeb",
+        "soap",
+        "caeet"
+    ],
+    "homepage": "https://github.com/sloukapetr/eet-laravel-package",
+    "support": {
+        "issues": "https://github.com/sloukapetr/eet-laravel-package/issues",
+        "source": "https://github.com/sloukapetr/eet-laravel-package"
+    },
+    "authors": [
+        {
+            "name": "Petr Slouka"
+        }
+    ],
+    "require": {
+        "php": "^8.5",
+        "ext-dom": "*",
+        "ext-openssl": "*",
+        "firebase/php-jwt": "^6.11|^7.0",
+        "illuminate/http": "^13.0",
+        "illuminate/support": "^13.0",
+        "robrichards/xmlseclibs": "^3.1"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.27",
+        "orchestra/testbench": "^11.0",
+        "pestphp/pest": "^4.0",
+        "phpstan/phpstan": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "SloukaPetr\\Eet\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SloukaPetr\\Eet\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "SloukaPetr\\Eet\\EetServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/pest",
+        "format": "vendor/bin/pint --format agent",
+        "analyse": "vendor/bin/phpstan analyse --memory-limit=1G"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

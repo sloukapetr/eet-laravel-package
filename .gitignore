@@ -1,0 +1,12 @@
+/vendor/
+.phpunit.cache/
+.phpstan.cache/
+.phpunit.result.cache
+.env
+.env.*
+!.env.example
+auth.json
+
+# The published playground archive contains the test-certificate password.
+/docs/CAEET_Playground_2026_v1.zip
+password_pokladni_cert_playground.txt
