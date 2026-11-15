@@ -17,10 +17,13 @@ Jediný zdroj pravdy o rozhraní jsou soubory stažené z https://eet.gov.cz/cs/
 - `src/Data/` – readonly DTO.
 - `src/Support/` – formát částky, času a vzory opsané z XSD (`SchemaPatterns`).
 - `src/Validation/ReceiptValidator.php` – formáty tržby. Vyhodí `ValidationException`.
+- `src/Certificate.php` – načtení PKCS#12. Soukromý klíč vrací jen `@internal` `privateKey()`.
+- `src/Support/LegacyPkcs12Reader.php` – převod 3DES PKCS#12 přes `openssl pkcs12 -legacy` (Symfony Process / `proc_open`).
 - `src/Exceptions/` – výjimky balíčku. Do textu výjimky nikdy nedávej heslo, klíč, certifikát ani XML s `BinarySecurityToken`.
 
 ## Veřejné API
-- Veřejné API fáze A: config klíče `eet.*`, DTO `Receipt`, `SendOptions`, `EetResponse`, `Warning`, `AmountFormatter`, `DateTimeFormatter`, `ReceiptValidator`, `SchemaPatterns`, `ValidationException`.
+- Veřejné API: config klíče `eet.*`, DTO `Receipt`, `SendOptions`, `EetResponse`, `Warning`, `AmountFormatter`, `DateTimeFormatter`, `ReceiptValidator`, `SchemaPatterns`, `ValidationException`, `Certificate` (`fromPkcs12`, `eic`, `serialNumber`, `notBefore`, `notAfter`, `thumbprintSha256`, `isValidAt`, `assertValidAt`, `toPkcs12`), výjimky `InvalidCertificatePassword`, `InvalidCertificate`, `CertificateExpired`.
+- `Certificate::privateKey()` je `@internal` pro podpis. Aplikace ho nevolá a neloguje.
 - `declare(strict_types=1);` v každém souboru, `final` u tříd, které nejsou k dědění, `readonly` u DTO.
 - Změna signatury je major verze. Balíček zatím není vydaný.
 

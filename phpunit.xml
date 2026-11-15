@@ -4,6 +4,9 @@
          bootstrap="vendor/autoload.php"
          colors="true"
          cacheDirectory=".phpunit.cache">
+    <php>
+        <ini name="zend.exception_ignore_args" value="1"/>
+    </php>
     <testsuites>
         <testsuite name="EET Laravel Package">
             <directory>tests</directory>
