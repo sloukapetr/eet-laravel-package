@@ -67,7 +67,7 @@ it('builds a signed message that matches the schema and the official samples', f
         ->and(attribute($document, 'SignatureMethod', 'Algorithm'))->toBe(SoapNamespaces::SIGNATURE_METHOD)
         ->and(attribute($document, 'Transform', 'Algorithm'))->toBe(SoapNamespaces::EXC_C14N)
         ->and(attribute($document, 'DigestMethod', 'Algorithm'))->toBe(SoapNamespaces::DIGEST)
-        ->and((new ResponseVerifier)->passes($xml, 'playground'))->toBeTrue()
+        ->and((new ResponseVerifier)->passes($xml, 'playground'))->toBeFalse()
         ->and((new ResponseVerifier)->passes($xml, 'production'))->toBeFalse()
         ->and(strlen($xml) < MessageLimiter::MAX_BYTES)->toBeTrue();
 

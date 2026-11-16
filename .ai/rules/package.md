@@ -22,7 +22,7 @@ Jediný zdroj pravdy o rozhraní jsou soubory stažené z https://eet.gov.cz/cs/
 - `src/CaeetClient.php`, `src/CaeetManager.php`, `src/Support/CaeetJwt.php` – obnova certifikátu. Cesty a těla jen z `docs/caeetapi/caeetapi_jwt.yml`. Fasáda `Caeet::using(Certificate)`. Balíček stav nepolluje: `pollAfterSeconds` a `Retry-After` vrátí v `RenewalStatus` a opakování řídí aplikace.
 - Podpis je jen `soap:Body`. V `Header` jsou jen `BinarySecurityToken` a `Signature` (exclusive C14N, SHA-256, RSA-SHA256). Žádný `Timestamp`.
 - `SOAPAction` je `http://fs.gov.cz/eet/OdeslaniTrzby`. `Content-Type` je `text/xml; charset=utf-8`.
-- CA certifikáty pro kontrolu podpisu odpovědi jsou v `resources/ca/`. Produkce ověřuje podpis vždy. Chybová odpověď (`Chyba`) podpis nemá; kód `0` je úspěch ověřovacího módu.
+- Podpis potvrzení ověřuje `ResponseVerifier` proti I.CA, ne proti CA EET. Vydavatel je `I.CA Public CA/RSA 06/2022` (sériové číslo 100001063), kořen `I.CA Root CA/RSA 05/2022` (sériové číslo 100000002). Soubory z https://www.ica.cz/korenove-certifikaty jsou v `resources/ca/playground` i `resources/ca/production`. Čísla v přístupových informacích u odrážky „CN“ jsou tato sériová čísla autorit. CN listu na playgroundu je `NEOSTRE - playground prostredi EET` a v PDF není. Produkce ověřuje podpis vždy. Chybová odpověď (`Chyba`) podpis nemá; kód `0` je úspěch ověřovacího módu.
 - `src/Support/LegacyPkcs12Reader.php` – převod 3DES PKCS#12 přes `openssl pkcs12 -legacy` (Symfony Process / `proc_open`).
 - `src/Exceptions/` – výjimky balíčku. Do textu výjimky nikdy nedávej heslo, klíč, certifikát ani XML s `BinarySecurityToken`.
 

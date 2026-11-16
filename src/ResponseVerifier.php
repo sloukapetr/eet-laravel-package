@@ -86,32 +86,56 @@ final class ResponseVerifier
         return "-----BEGIN CERTIFICATE-----\n".trim(chunk_split($body, 64, "\n"))."\n-----END CERTIFICATE-----\n";
     }
 
+    /**
+     * The access PDFs name the response signer as a certificate issued by
+     * I.CA Public CA/RSA 06/2022. The numbers 100001063 and 100000002 are the
+     * serial numbers of that subordinate CA and of I.CA Root CA/RSA 05/2022.
+     */
     private function chainsToEnvironment(string $certificate, string $environment): bool
     {
         if (! in_array($environment, ['playground', 'production'], true)) {
             return false;
         }
 
-        $directory = dirname(__DIR__).'/resources/ca/'.$environment;
+        $leaf = openssl_x509_parse($certificate);
+        $issuer = is_array($leaf) ? ($leaf['issuer']['CN'] ?? null) : null;
 
-        foreach (['ca_eet-sub_cert-playground.crt', 'ca_eet-sub_prod.pem', 'ca_eet-root_cert-playground.crt', 'ca_eet-root_prod.pem'] as $name) {
-            $path = $directory.'/'.$name;
-
-            if (! is_file($path)) {
-                continue;
-            }
-
-            $authority = file_get_contents($path);
-
-            if (! is_string($authority) || $authority === '') {
-                continue;
-            }
-
-            if (openssl_x509_verify($certificate, $authority) === 1) {
-                return true;
-            }
+        if ($issuer !== 'I.CA Public CA/RSA 06/2022') {
+            return false;
         }
 
-        return false;
+        $directory = dirname(__DIR__).'/resources/ca/'.$environment;
+        $subordinate = $this->authority($directory.'/ica-public-ca-rsa-06-2022.pem', '100001063', 'I.CA Public CA/RSA 06/2022');
+        $root = $this->authority($directory.'/ica-root-ca-rsa-05-2022.pem', '100000002', 'I.CA Root CA/RSA 05/2022');
+
+        if ($subordinate === null || $root === null) {
+            return false;
+        }
+
+        return openssl_x509_verify($certificate, $subordinate) === 1
+            && openssl_x509_verify($subordinate, $root) === 1;
+    }
+
+    private function authority(string $path, string $serial, string $commonName): ?string
+    {
+        if (! is_file($path)) {
+            return null;
+        }
+
+        $pem = file_get_contents($path);
+        $parsed = is_string($pem) ? openssl_x509_parse($pem) : false;
+
+        if (! is_string($pem) || $pem === '' || ! is_array($parsed)) {
+            return null;
+        }
+
+        $subject = $parsed['subject']['CN'] ?? null;
+        $found = $parsed['serialNumber'] ?? null;
+
+        if ($subject !== $commonName || $found !== $serial) {
+            return null;
+        }
+
+        return $pem;
     }
 }

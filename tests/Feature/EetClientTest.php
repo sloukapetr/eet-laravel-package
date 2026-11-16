@@ -5,7 +5,6 @@ declare(strict_types=1);
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use SloukaPetr\Eet\Data\SendOptions;
-use SloukaPetr\Eet\EetClient;
 use SloukaPetr\Eet\Facades\Eet;
 use SloukaPetr\Eet\Signer;
 use SloukaPetr\Eet\SoapNamespaces;
@@ -60,27 +59,31 @@ it('returns a temporary error when the connection times out or the server fails'
     'server error' => [503],
 ]);
 
-it('accepts a signed playground confirmation and rejects it in production', function () {
-    $signed = signedConfirmation();
+it('accepts a playground confirmation signed by I.CA', function () {
+    $signed = file_get_contents(dirname(__DIR__).'/fixtures/playground-potvrzeni.xml');
 
     Http::fake([
-        '*' => Http::response($signed, 200),
+        '*' => Http::response(is_string($signed) ? $signed : '', 200),
     ]);
 
-    $playground = Eet::send(receipt(), playgroundCertificate());
+    $response = Eet::send(receipt(), playgroundCertificate());
 
-    config(['eet.environment' => 'production']);
-    Eet::clearResolvedInstances();
-    $this->app->forgetInstance(EetClient::class);
+    expect($response->ok)->toBeTrue()
+        ->and($response->signatureValid)->toBeTrue()
+        ->and($response->pok)->toEndWith('-ff')
+        ->and($response->test)->toBeTrue();
+});
 
-    $production = Eet::send(receipt(), playgroundCertificate());
+it('rejects a confirmation signed by the taxpayer certificate', function () {
+    Http::fake([
+        '*' => Http::response(signedConfirmation(), 200),
+    ]);
 
-    expect($playground->ok)->toBeTrue()
-        ->and($playground->signatureValid)->toBeTrue()
-        ->and($playground->pok)->toEndWith('-ff')
-        ->and($production->ok)->toBeFalse()
-        ->and($production->signatureValid)->toBeFalse()
-        ->and($production->isTemporaryError())->toBeTrue();
+    $response = Eet::send(receipt(), playgroundCertificate());
+
+    expect($response->ok)->toBeFalse()
+        ->and($response->signatureValid)->toBeFalse()
+        ->and($response->message)->toBe('Response signature was rejected.');
 });
 
 it('records fake responses without calling the network', function () {
