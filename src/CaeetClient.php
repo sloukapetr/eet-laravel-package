@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace SloukaPetr\Eet;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\Response;
 use SloukaPetr\Eet\Data\IssuedCertificate;
 use SloukaPetr\Eet\Data\RenewalStatus;
 use SloukaPetr\Eet\Exceptions\CaeetException;
+use SloukaPetr\Eet\Exceptions\CertificateExpired;
+use SloukaPetr\Eet\Exceptions\InvalidCertificate;
+use SloukaPetr\Eet\Exceptions\InvalidCertificatePassword;
 use SloukaPetr\Eet\Support\CaeetJwt;
+use Throwable;
 
 final class CaeetClient
 {
@@ -34,7 +39,7 @@ final class CaeetClient
 
     public function status(string $reqId): RenewalStatus
     {
-        $response = $this->send('get', '/request/'.$reqId.'/status');
+        $response = $this->send('get', $this->requestPath($reqId, '/status'));
         $body = $this->json($response);
         $state = $body['state'] ?? null;
 
@@ -59,7 +64,7 @@ final class CaeetClient
 
     public function claimDownload(string $reqId): IssuedCertificate
     {
-        $body = $this->json($this->send('post', '/request/'.$reqId.'/claim-download'));
+        $body = $this->json($this->send('post', $this->requestPath($reqId, '/claim-download')));
         $encoded = $body['pkcs12'] ?? null;
         $password = $body['password'] ?? null;
         $certificate = is_array($body['certificate'] ?? null) ? $body['certificate'] : [];
@@ -79,7 +84,7 @@ final class CaeetClient
 
     public function ackDownload(string $reqId): void
     {
-        $this->send('post', '/request/'.$reqId.'/ack-download', [204]);
+        $this->send('post', $this->requestPath($reqId, '/ack-download'), [204]);
     }
 
     /**
@@ -115,11 +120,21 @@ final class CaeetClient
             throw new CaeetException('CAEET base URL is not configured.');
         }
 
-        $response = $this->http
-            ->withToken(CaeetJwt::issue($this->certificate))
-            ->acceptJson()
-            ->timeout($this->timeout)
-            ->send($method, $this->baseUrl.$path);
+        try {
+            $response = $this->http
+                ->withToken(CaeetJwt::issue($this->certificate))
+                ->acceptJson()
+                ->withOptions(['allow_redirects' => false])
+                ->timeout($this->timeout)
+                ->connectTimeout($this->timeout)
+                ->send($method, $this->baseUrl.$path);
+        } catch (CertificateExpired|InvalidCertificate|InvalidCertificatePassword $exception) {
+            throw $exception;
+        } catch (ConnectionException) {
+            throw new CaeetException('CAEET request failed.');
+        } catch (Throwable) {
+            throw new CaeetException('CAEET request failed.');
+        }
 
         if (! in_array($response->status(), $ok, true)) {
             throw new CaeetException($this->safeMessage($response));
@@ -143,12 +158,35 @@ final class CaeetClient
         return $decoded;
     }
 
+    private function requestPath(string $reqId, string $suffix): string
+    {
+        if (preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', $reqId) !== 1) {
+            throw new CaeetException('CAEET request id is not a UUID.');
+        }
+
+        return '/request/'.$reqId.$suffix;
+    }
+
     private function safeMessage(Response $response): string
     {
         $decoded = $response->json();
-        $message = is_array($decoded) ? ($decoded['message'] ?? null) : null;
 
-        if (! is_string($message) || $message === '' || str_contains($message, 'BEGIN ') || strlen($message) > 200) {
+        if (! is_array($decoded) || isset($decoded['pkcs12'])) {
+            return 'CAEET request failed.';
+        }
+
+        $message = $decoded['message'] ?? null;
+        $password = $decoded['password'] ?? null;
+
+        if (array_key_exists('pkcs12', $decoded) || array_key_exists('password', $decoded)) {
+            return 'CAEET request failed.';
+        }
+
+        if (! is_string($message) || $message === '' || str_contains($message, 'BEGIN ') || strlen($message) > 200 || preg_match('/^[A-Za-z0-9]{8}$/', $message) === 1) {
+            return 'CAEET request failed.';
+        }
+
+        if (is_string($password) && $password !== '' && str_contains($message, $password)) {
             return 'CAEET request failed.';
         }
 

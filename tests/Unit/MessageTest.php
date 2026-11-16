@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Carbon\CarbonImmutable;
-use SloukaPetr\Eet\Certificate;
 use SloukaPetr\Eet\Data\SendOptions;
 use SloukaPetr\Eet\Exceptions\ValidationException;
 use SloukaPetr\Eet\MessageBuilder;
@@ -130,23 +129,6 @@ function signedReceipt(SendOptions $options, array $overrides = []): string
     $document = (new MessageBuilder)->build(receipt($overrides), $options, '03965780-6457-4842-bd80-5f9195c0b8c8', CarbonImmutable::now('UTC'));
 
     return (new Signer)->sign($document, playgroundCertificate());
-}
-
-function playgroundCertificate(): Certificate
-{
-    $password = getenv('EET_PLAYGROUND_P12_PASSWORD');
-
-    if (! is_string($password) || $password === '') {
-        throw new RuntimeException('Set EET_PLAYGROUND_P12_PASSWORD in .env.testing.');
-    }
-
-    $binary = file_get_contents(dirname(__DIR__).'/fixtures/playground/CA_EET-Playground-CZ00000019.p12');
-
-    if ($binary === false) {
-        throw new RuntimeException('Missing playground certificate fixture.');
-    }
-
-    return Certificate::fromPkcs12($binary, $password);
 }
 
 function loadXml(string $xml): DOMDocument

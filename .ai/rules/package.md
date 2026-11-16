@@ -13,12 +13,13 @@ Jediný zdroj pravdy o rozhraní jsou soubory stažené z https://eet.gov.cz/cs/
 - CAEET base URL ber z `docs/caeetapi/caeetapi_jwt.yml` (`servers`). Tři prostředí: test `https://ca.test.caeet.gov.cz/api`, zkušební `https://ca.zkus.caeet.gov.cz/api`, produkce `https://ca.caeet.gov.cz/api`. Které patří k playgroundu EET, není v XSD. Dokud to Petr neřekne, `caeet.base_url` zůstává prázdné a aplikace ho nastaví.
 
 ## Struktura
-- `src/EetServiceProvider.php` – konfigurace. Fasáda a klient přijdou až ve fázi, která je posílá.
+- `src/EetServiceProvider.php` – konfigurace, `EetClient` a `CaeetManager`.
 - `src/Data/` – readonly DTO.
 - `src/Support/` – formát částky, času a vzory opsané z XSD (`SchemaPatterns`).
 - `src/Validation/ReceiptValidator.php` – formáty tržby. Vyhodí `ValidationException`.
 - `src/Certificate.php` – načtení PKCS#12. Soukromý klíč vrací jen `@internal` `privateKey()`.
 - `src/MessageBuilder.php`, `src/Signer.php`, `src/ResponseParser.php`, `src/ResponseVerifier.php`, `src/EetClient.php` – sestavení, podpis, odeslání a kontrola odpovědi. Fasáda `Eet`.
+- `src/CaeetClient.php`, `src/CaeetManager.php`, `src/Support/CaeetJwt.php` – obnova certifikátu. Cesty a těla jen z `docs/caeetapi/caeetapi_jwt.yml`. Fasáda `Caeet::using(Certificate)`. Balíček stav nepolluje: `pollAfterSeconds` a `Retry-After` vrátí v `RenewalStatus` a opakování řídí aplikace.
 - Podpis je jen `soap:Body`. V `Header` jsou jen `BinarySecurityToken` a `Signature` (exclusive C14N, SHA-256, RSA-SHA256). Žádný `Timestamp`.
 - `SOAPAction` je `http://fs.gov.cz/eet/OdeslaniTrzby`. `Content-Type` je `text/xml; charset=utf-8`.
 - CA certifikáty pro kontrolu podpisu odpovědi jsou v `resources/ca/`. Produkce ověřuje podpis vždy. Chybová odpověď (`Chyba`) podpis nemá; kód `0` je úspěch ověřovacího módu.
@@ -26,7 +27,7 @@ Jediný zdroj pravdy o rozhraní jsou soubory stažené z https://eet.gov.cz/cs/
 - `src/Exceptions/` – výjimky balíčku. Do textu výjimky nikdy nedávej heslo, klíč, certifikát ani XML s `BinarySecurityToken`.
 
 ## Veřejné API
-- Veřejné API: config klíče `eet.*`, DTO `Receipt`, `SendOptions`, `EetResponse`, `Warning`, `AmountFormatter`, `DateTimeFormatter`, `ReceiptValidator`, `SchemaPatterns`, `ValidationException`, `Certificate`, výjimky `InvalidCertificatePassword`, `InvalidCertificate`, `CertificateExpired`, fasáda `Eet` (`send`, `verify`, `fake`).
+- Veřejné API: config klíče `eet.*`, DTO `Receipt`, `SendOptions`, `EetResponse`, `Warning`, `IssuedCertificate`, `RenewalStatus`, `AmountFormatter`, `DateTimeFormatter`, `ReceiptValidator`, `SchemaPatterns`, `ValidationException`, `Certificate`, výjimky `InvalidCertificatePassword`, `InvalidCertificate`, `CertificateExpired`, `CaeetException`, fasáda `Eet` (`send`, `verify`, `fake`) a fasáda `Caeet` (`using`, `fake`).
 - `EetResponse::$requestXml` a `$responseXml` obsahují certifikát v `BinarySecurityToken`. Aplikace je nesmí logovat.
 - `Certificate::privateKey()` je `@internal` pro podpis. Aplikace ho nevolá a neloguje.
 - `declare(strict_types=1);` v každém souboru, `final` u tříd, které nejsou k dědění, `readonly` u DTO.

@@ -31,6 +31,7 @@ final class EetServiceProvider extends ServiceProvider
         });
 
         $this->app->alias(EetClient::class, 'eet');
+        $this->app->singleton(CaeetManager::class);
     }
 
     public function boot(): void

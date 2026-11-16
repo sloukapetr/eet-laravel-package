@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Carbon\CarbonImmutable;
+use SloukaPetr\Eet\Certificate;
 use SloukaPetr\Eet\Data\Receipt;
 use SloukaPetr\Eet\Tests\TestCase;
 
@@ -36,4 +37,27 @@ function receipt(array $overrides = []): Receipt
         principalEic: $values['principalEic'] ?? null,
         multipleTaxpayers: $values['multipleTaxpayers'] ?? null,
     );
+}
+
+function playgroundCertificate(): Certificate
+{
+    static $certificate = null;
+
+    if ($certificate instanceof Certificate) {
+        return $certificate;
+    }
+
+    $password = getenv('EET_PLAYGROUND_P12_PASSWORD');
+
+    if (! is_string($password) || $password === '') {
+        throw new RuntimeException('Set EET_PLAYGROUND_P12_PASSWORD in .env.testing.');
+    }
+
+    $binary = file_get_contents(dirname(__DIR__).'/tests/fixtures/playground/CA_EET-Playground-CZ00000019.p12');
+
+    if ($binary === false) {
+        throw new RuntimeException('Missing playground certificate fixture.');
+    }
+
+    return $certificate = Certificate::fromPkcs12($binary, $password);
 }

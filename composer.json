@@ -52,7 +52,8 @@
                 "SloukaPetr\\Eet\\EetServiceProvider"
             ],
             "aliases": {
-                "Eet": "SloukaPetr\\Eet\\Facades\\Eet"
+                "Eet": "SloukaPetr\\Eet\\Facades\\Eet",
+                "Caeet": "SloukaPetr\\Eet\\Facades\\Caeet"
             }
         }
     },

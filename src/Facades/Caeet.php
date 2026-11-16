@@ -7,6 +7,7 @@ namespace SloukaPetr\Eet\Facades;
 use Illuminate\Support\Facades\Facade;
 use SloukaPetr\Eet\CaeetClient;
 use SloukaPetr\Eet\CaeetFake;
+use SloukaPetr\Eet\CaeetManager;
 use SloukaPetr\Eet\Certificate;
 
 /**
@@ -24,6 +25,6 @@ final class Caeet extends Facade
 
     protected static function getFacadeAccessor(): string
     {
-        return \SloukaPetr\Eet\CaeetManager::class;
+        return CaeetManager::class;
     }
 }
