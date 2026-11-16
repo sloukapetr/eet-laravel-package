@@ -32,6 +32,7 @@ final readonly class EetResponse
         public ?int $durationMs = null,
         public ?string $requestXml = null,
         public ?string $responseXml = null,
+        public ?bool $signatureValid = null,
     ) {}
 
     public function isTemporaryError(): bool

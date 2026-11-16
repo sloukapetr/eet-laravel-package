@@ -109,6 +109,19 @@ final class Certificate
         return $this->privateKeyPem;
     }
 
+    /**
+     * @return array{eic: string, serialNumber: string, notBefore: CarbonImmutable, notAfter: CarbonImmutable}
+     */
+    public function __debugInfo(): array
+    {
+        return [
+            'eic' => $this->eic,
+            'serialNumber' => $this->serialNumber,
+            'notBefore' => $this->notBefore,
+            'notAfter' => $this->notAfter,
+        ];
+    }
+
     public function toPkcs12(string $password): string
     {
         $exported = '';

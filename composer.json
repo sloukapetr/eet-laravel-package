@@ -50,7 +50,10 @@
         "laravel": {
             "providers": [
                 "SloukaPetr\\Eet\\EetServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "Eet": "SloukaPetr\\Eet\\Facades\\Eet"
+            }
         }
     },
     "scripts": {

@@ -18,11 +18,16 @@ Jediný zdroj pravdy o rozhraní jsou soubory stažené z https://eet.gov.cz/cs/
 - `src/Support/` – formát částky, času a vzory opsané z XSD (`SchemaPatterns`).
 - `src/Validation/ReceiptValidator.php` – formáty tržby. Vyhodí `ValidationException`.
 - `src/Certificate.php` – načtení PKCS#12. Soukromý klíč vrací jen `@internal` `privateKey()`.
+- `src/MessageBuilder.php`, `src/Signer.php`, `src/ResponseParser.php`, `src/ResponseVerifier.php`, `src/EetClient.php` – sestavení, podpis, odeslání a kontrola odpovědi. Fasáda `Eet`.
+- Podpis je jen `soap:Body`. V `Header` jsou jen `BinarySecurityToken` a `Signature` (exclusive C14N, SHA-256, RSA-SHA256). Žádný `Timestamp`.
+- `SOAPAction` je `http://fs.gov.cz/eet/OdeslaniTrzby`. `Content-Type` je `text/xml; charset=utf-8`.
+- CA certifikáty pro kontrolu podpisu odpovědi jsou v `resources/ca/`. Produkce ověřuje podpis vždy. Chybová odpověď (`Chyba`) podpis nemá; kód `0` je úspěch ověřovacího módu.
 - `src/Support/LegacyPkcs12Reader.php` – převod 3DES PKCS#12 přes `openssl pkcs12 -legacy` (Symfony Process / `proc_open`).
 - `src/Exceptions/` – výjimky balíčku. Do textu výjimky nikdy nedávej heslo, klíč, certifikát ani XML s `BinarySecurityToken`.
 
 ## Veřejné API
-- Veřejné API: config klíče `eet.*`, DTO `Receipt`, `SendOptions`, `EetResponse`, `Warning`, `AmountFormatter`, `DateTimeFormatter`, `ReceiptValidator`, `SchemaPatterns`, `ValidationException`, `Certificate` (`fromPkcs12`, `eic`, `serialNumber`, `notBefore`, `notAfter`, `thumbprintSha256`, `isValidAt`, `assertValidAt`, `toPkcs12`), výjimky `InvalidCertificatePassword`, `InvalidCertificate`, `CertificateExpired`.
+- Veřejné API: config klíče `eet.*`, DTO `Receipt`, `SendOptions`, `EetResponse`, `Warning`, `AmountFormatter`, `DateTimeFormatter`, `ReceiptValidator`, `SchemaPatterns`, `ValidationException`, `Certificate`, výjimky `InvalidCertificatePassword`, `InvalidCertificate`, `CertificateExpired`, fasáda `Eet` (`send`, `verify`, `fake`).
+- `EetResponse::$requestXml` a `$responseXml` obsahují certifikát v `BinarySecurityToken`. Aplikace je nesmí logovat.
 - `Certificate::privateKey()` je `@internal` pro podpis. Aplikace ho nevolá a neloguje.
 - `declare(strict_types=1);` v každém souboru, `final` u tříd, které nejsou k dědění, `readonly` u DTO.
 - Změna signatury je major verze. Balíček zatím není vydaný.
